@@ -26,12 +26,17 @@ use IEEE.MATH_REAL.ALL;
 -- arithmetic functions with Signed or Unsigned values
 use IEEE.NUMERIC_STD;
 use IEEE.NUMERIC_STD.ALL;
-use DigitalClock.types;
+use work.all;
+use work.types.all;
+use work.topEntity_0;
 
+--library UNISIM;
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
 --library UNISIM;
 --use UNISIM.VComponents.all;
+
+
 
 entity SevenSeg is
   port ( Seg7    : OUT STD_LOGIC_VECTOR(6 downto 0)
@@ -43,39 +48,26 @@ entity SevenSeg is
        );
 end SevenSeg;
 
-function To_Std_Logic(L: BOOLEAN) return std_ulogic is
-begin
-  if L then
-    return('1');
-  else
-    return('0');
-  end if;
-end function To_Std_Logic;
-
-function From_Std_Logic(L: STD_LOGIC) return BOOLEAN is
-begin
-  case L of
-    '0' => return True;
-    '1' => return False;
-  end case;
-end function From_Std_Logic;
-
 ARCHITECTURE Behavioral OF SevenSeg IS
-  component topEntity_0 is
-  port(clk            : in boolean;
-       system1000     : in std_logic;
-       system1000_rst : in std_logic;
-       topLet_o       : out product6);
-  end;
+  signal recordish : product6;
+  signal clkish    : boolean;
 BEGIN
-  t : topEntity_0 PORT MAP (
-      clk_i1         => From_Std_Logic(clk)
+  t : entity topEntity_0 PORT MAP (
+      clk_i1         => clkish
     , system1000     => clk
-    , system1000_rst => OPEN
+    , system1000_rst => '0'
     , topLet_o       => recordish
-  )
-  Seg7_an <= recordish.product6_sel0;
-  Seg7    <= recordish.product6_sel1;
+  );
+  process (clk, clkish)
+  begin
+    if clk='0'
+      then clkish <= true;
+	   else clkish <= false;
+    end if;
+  end process;
+  -- clkish  <= fromSLV(clk);
+  Seg7_an <= toSLV(recordish.product6_sel0);
+  Seg7    <= toSLV(recordish.product6_sel1);
   Seg7_DP <= '1';
   Led     <= Switch;
 END Behavioral;
