@@ -50,22 +50,12 @@ end SevenSeg;
 
 ARCHITECTURE Behavioral OF SevenSeg IS
   signal recordish : product5;
-  signal clkish    : boolean;
 BEGIN
   t : entity topEntity_0 PORT MAP (
-      clk_i1         => clkish
-    , system1000     => clk
+      system1000     => clk
     , system1000_rst => '0'
     , topLet_o       => recordish
   );
-  process (clk, clkish)
-  begin
-    if clk='0'
-      then clkish <= false;
-	   else clkish <= true;
-    end if;
-  end process;
-  --clkish  <= fromSLV(clk);
   Seg7_an <= toSLV(recordish.product5_sel0);
   Seg7    <= toSLV(recordish.product5_sel1);
   Seg7_DP <= '1';
