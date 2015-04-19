@@ -34,8 +34,8 @@ everySecond  = counter' fpgaFrequency
 
 -- using 32 bit arithmetic is a bit lazy
 fpgaFrequency :: Unsigned 27
-fpgaFrequency  = 1000 -- reduced for debugging
--- 32768000
+--fpgaFrequency  = 1000 -- reduced for debugging
+fpgaFrequency  = 32768000 -- real 32MHz
 
 -- TODO: These have extra clocks!
 counter      :: (Num s, Eq s) =>
@@ -70,7 +70,7 @@ hourClock = bundle (  secondsCounter
                    :> tenMinutesCounter
                    :> Nil )
   where
-    secondPulse                         = counter' fpgaFrequency
+    secondPulse                         = counter' 32768 -- $ fpgaFrequency
     (secondsCounter,    tenSecondPulse) = counter 10 secondPulse
     (tenSecondsCounter, minutePulse   ) = counter 6  tenSecondPulse
     (minutesCounter,    tenMinutePulse) = counter 10 minutePulse
@@ -132,8 +132,8 @@ sevenSegmentDisplay digits = bundle (whichDigit,
     rst             = signal False -- no resetting for now...
     currentDigit   :: Signal BCDDigit
     currentDigit    = (!!) <$> digits <*> whichDigit --(!!) <$> digits <*> whichDigit
-    myMaxIndex :: (KnownNat n) => Unbundled (Vec n a) -> Unsigned n
-    myMaxIndex  = fromIntegral . maxIndex
+    myMaxIndex     :: (KnownNat n) => Unbundled (Vec n a) -> Unsigned n
+    myMaxIndex      = fromIntegral . maxIndex
 
 -- | Top entity to implement
 topEntity ::  Signal (SevenSegmentDisplay 4)
