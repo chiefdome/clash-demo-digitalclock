@@ -49,7 +49,7 @@ entity SevenSeg is
 end SevenSeg;
 
 ARCHITECTURE Behavioral OF SevenSeg IS
-  signal recordish : product3;
+  signal recordish : product5;
   signal clkish    : boolean;
 BEGIN
   t : entity topEntity_0 PORT MAP (
@@ -65,9 +65,9 @@ BEGIN
 	   else clkish <= true;
     end if;
   end process;
-  -- clkish  <= fromSLV(clk);
-  Seg7_an <= toSLV(recordish.product3_sel0);
-  Seg7    <= toSLV(recordish.product3_sel1);
+  --clkish  <= fromSLV(clk);
+  Seg7_an <= toSLV(recordish.product5_sel0);
+  Seg7    <= toSLV(recordish.product5_sel1);
   Seg7_DP <= '1';
   Led     <= Switch;
 END Behavioral;
