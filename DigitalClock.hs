@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
@@ -7,7 +8,6 @@ module Main where
 import           Prelude                 () -- no implicit Prelude!
 import           Control.Applicative
 import           Control.Arrow
---import           Data.Foldable(toList)
 import qualified Data.List as List
 import           Data.Traversable
 
@@ -55,10 +55,6 @@ counter' limit = (fsm <^> 0) $ signal ()
   where
     fsm st () | limit == st = (0,    True)
               | otherwise   = (st+1, False)
-
-mapper ::  Applicative f => (a1 -> a -> b) -> (f a1, f a) -> f b
-mapper f (a, b) = f <$> a <*> b
--- Q: do we need to add clock everywhere?
 
 -- | Given an input clock, this clock gives four digits of the clock
 -- for minutes and seconds.
@@ -115,18 +111,18 @@ instance (KnownNat n) => Bundle (SevenSegmentDisplay n) where
   unbundle' _  s                                = (anodeIndex <$> s, currentDigit <$> s)
   bundle'   _ (anode,                    digit) = SevenSegmentDisplay <$> anode <*> digit
 
-digitAnode 0 = [b|0001|]
-digitAnode 1 = [b|0010|]
-digitAnode 2 = [b|0100|]
-digitAnode 3 = [b|1000|]
+-- This seems to make compiler loop!
+--digitAnode i = 2^i
+digitAnode :: (KnownNat n, KnownNat m) => Unsigned n -> Unsigned m 
+digitAnode i = 2^i
 
 -- | Given an array of numbers and clock for changing anode state,
 -- drives @SevenSegmentDisplay@ interface.
 sevenSegmentDisplay :: KnownNat n              =>
                        Signal (Vec n BCDDigit) ->
                        Signal (SevenSegmentDisplay n)
-sevenSegmentDisplay digits = bundle (whichDigit,
-                                         sevenSegmentDigit <$> currentDigit)
+sevenSegmentDisplay digits = bundle (digitAnode <$> whichDigit,
+                                     sevenSegmentDigit <$> currentDigit)
   where
     (whichDigit, _) = counter (myMaxIndex $ unbundle digits) hz1000
     rst             = signal False -- no resetting for now...
