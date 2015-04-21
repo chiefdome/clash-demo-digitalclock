@@ -14,7 +14,7 @@ Important files:
 
 * `DigitalClock.hs` - contains Haskell code.
 
-* `TopEntity.vhdl` - contains wrapper that translates signal names in VHDL generated from Haskell to Papillio LogicStart pin codes.
+* `TopEntity.vhd` - contains wrapper that translates signal names in VHDL generated from Haskell to Papillio LogicStart pin codes.
 
 * `constraints.ucf` - maps descriptive pin codes to FPGA's pin numbers.
 
@@ -39,7 +39,7 @@ get it on your Papillio:
     * re-add these files as source files in Xilinx ISE (right click within project window)
     
 3. Recompile _Xilinx ISE_ project and generate new bitcode file `SevenSeg.bit`.
-    * If there are any errors, compare type of `recordish` in `topEntity.vhdl` wrapper file,
+    * If there are any errors, compare type of `recordish` in `TopEntity.vhd` wrapper file,
     and generated `DigitalClock/topEntity_0.vhdl` file. Modify the name of the datatype accordingly in two selectors just below.
     * Make sure the toolchain follows all the steps until generation of code for the target device.
         (Note that for a different device you may just provide different `constraints.ucf` file to ISE,
