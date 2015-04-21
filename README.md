@@ -8,8 +8,20 @@ Uses one algebraic datatype, and two types of counters as Mealy machines.
 
 Displays seconds since reset on a seven segment display.
 
+
+Important files:
+----------------
+
+* `DigitalClock.hs` - contains Haskell code.
+
+* `TopEntity.vhdl` - contains wrapper that translates signal names in VHDL generated from Haskell to Papillio LogicStart pin codes.
+
+* `constraints.ucf` - maps descriptive pin codes to FPGA's pin numbers.
+
+* `SevenSeg.xise` and `SevenSeg.gise` - Xilinx ISE project.
+
 Recompilation
-=============
+-------------
 Not all steps are automated yet, so you may need to do few steps to
 get it on your Papillio:
 
