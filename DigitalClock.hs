@@ -44,9 +44,9 @@ counter      :: (Num s, Eq s) =>
                  Unbundled (s, Bool)
 counter limit = fsm <^> 0
   where
-    fsm st False              = (st,   (st,   False))
-    fsm st True | limit == st = (0,    (0,    True ))
-    fsm st True               = (st+1, (st+1, False))
+    fsm st False                = (st,   (st,   False))
+    fsm st True | limit == st+1 = (0,    (0,    True ))
+    fsm st True                 = (st+1, (st+1, False))
 
 counter'      :: (Num s, Eq s) =>
                   s            -> -- ^ number of clock cycles before overflow and reset
@@ -66,7 +66,7 @@ hourClock = bundle (  secondsCounter
                    :> tenMinutesCounter
                    :> Nil )
   where
-    secondPulse                         = counter' 32768 -- $ fpgaFrequency
+    secondPulse                         = counter'   fpgaFrequency
     (secondsCounter,    tenSecondPulse) = counter 10 secondPulse
     (tenSecondsCounter, minutePulse   ) = counter 6  tenSecondPulse
     (minutesCounter,    tenMinutePulse) = counter 10 minutePulse
@@ -80,22 +80,27 @@ newtype SevenSegDigit = SevenSegDigit { ssDigit :: Unsigned 7 }
   deriving (Eq, Ord, Enum, Bounded, Show, Num)
 
 -- | Encoding a BCD digit to seven segment display with active-low.
-sevenSegmentDigit :: BCDDigit -> SevenSegDigit
-sevenSegmentDigit 0 = [b| 1000000 |]
-sevenSegmentDigit 1 = [b| 1111001 |]
-sevenSegmentDigit 2 = [b| 0100100 |]
-sevenSegmentDigit 3 = [b| 0110000 |]
-sevenSegmentDigit 4 = [b| 0011001 |]
-sevenSegmentDigit 5 = [b| 0010010 |]
-sevenSegmentDigit 6 = [b| 0000010 |]
-sevenSegmentDigit 7 = [b| 1111000 |]
-sevenSegmentDigit 8 = [b| 0000000 |]
-sevenSegmentDigit 9 = [b| 0010000 |]
-sevenSegmentDigit _ = [b| 1111111 |] -- empty
+sevenSegmentDigit   :: BCDDigit -> SevenSegDigit
+sevenSegmentDigit  0 = [b| 1000000 |]
+sevenSegmentDigit  1 = [b| 1111001 |]
+sevenSegmentDigit  2 = [b| 0100100 |]
+sevenSegmentDigit  3 = [b| 0110000 |]
+sevenSegmentDigit  4 = [b| 0011001 |]
+sevenSegmentDigit  5 = [b| 0010010 |]
+sevenSegmentDigit  6 = [b| 0000010 |]
+sevenSegmentDigit  7 = [b| 1111000 |]
+sevenSegmentDigit  8 = [b| 0000000 |]
+sevenSegmentDigit  9 = [b| 0010000 |]
+sevenSegmentDigit 10 = [b| 0001000 |] -- empty
+sevenSegmentDigit 11 = [b| 0000011 |] -- empty
+sevenSegmentDigit 12 = [b| 1000110 |] -- empty
+sevenSegmentDigit 13 = [b| 1001110 |] -- empty
+sevenSegmentDigit 14 = [b| 0000110 |] -- empty
+sevenSegmentDigit 15 = [b| 0001110 |] -- empty
 
 
 hz1000 :: Signal Bool
-hz1000 = counter' (1 :: Unsigned 2) -- (32768 :: Unsigned 17)
+hz1000 = counter' 32768 --(1 :: Unsigned 2) -- (32768 :: Unsigned 17)
 -- ((2^15) :: Word17)
 
 -- | Interface to seven segment display.
@@ -113,15 +118,18 @@ instance (KnownNat n) => Bundle (SevenSegmentDisplay n) where
 
 -- This seems to make compiler loop!
 --digitAnode i = 2^i
-digitAnode :: (KnownNat n, KnownNat m) => Unsigned n -> Unsigned m 
-digitAnode i = 2^i
+digitAnode  :: (KnownNat n) => Unsigned n -> Unsigned n
+digitAnode 0 = [b|0111|]
+digitAnode 1 = [b|1011|]
+digitAnode 2 = [b|1101|]
+digitAnode 3 = [b|1110|]
 
 -- | Given an array of numbers and clock for changing anode state,
 -- drives @SevenSegmentDisplay@ interface.
 sevenSegmentDisplay :: KnownNat n              =>
                        Signal (Vec n BCDDigit) ->
                        Signal (SevenSegmentDisplay n)
-sevenSegmentDisplay digits = bundle (digitAnode <$> whichDigit,
+sevenSegmentDisplay digits = bundle (digitAnode        <$> whichDigit  ,
                                      sevenSegmentDigit <$> currentDigit)
   where
     (whichDigit, _) = counter (myMaxIndex $ unbundle digits) hz1000
@@ -129,7 +137,7 @@ sevenSegmentDisplay digits = bundle (digitAnode <$> whichDigit,
     currentDigit   :: Signal BCDDigit
     currentDigit    = (!!) <$> digits <*> whichDigit --(!!) <$> digits <*> whichDigit
     myMaxIndex     :: (KnownNat n) => Unbundled (Vec n a) -> Unsigned n
-    myMaxIndex      = fromIntegral . maxIndex
+    myMaxIndex      = fromIntegral . (+1) . maxIndex
 
 -- | Top entity to implement
 topEntity ::  Signal (SevenSegmentDisplay 4)
